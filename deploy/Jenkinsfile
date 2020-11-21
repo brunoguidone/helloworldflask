@@ -4,7 +4,7 @@ pipeline {
     environment {
         REVISION = "${env.BUILD_NUMBER}"
         REGISTRY = "brunoguidone/helloworldflask"
-        REGISTRYID = "brunoguidone"
+        REGISTRYID = "Dockerhub"
         DOCKERIMAGE = ""
     }
 
