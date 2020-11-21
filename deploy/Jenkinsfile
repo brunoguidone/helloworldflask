@@ -29,9 +29,12 @@ pipeline {
         
         stage('Upload to Registry') {
             steps {
-                withDockerRegistry([ credentialsId: "Dockerhub", url: "https://hub.docker.com/repository/docker/brunoguidone/helloworldflask/"]){
-                    sh 'docker push $DOCKERIMAGE'
-                }
+                script {
+                docker.withRegistry( '', registryCredential ) {
+                    dockerImage.push("$BUILD_NUMBER")
+                    dockerImage.push('latest')
+                  }
+               }
             }
         }
 
