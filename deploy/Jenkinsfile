@@ -46,7 +46,7 @@ pipeline {
 
         stage('Pulling and Deploying') {
            steps {
-               sh '''docker run --rm -p 5000:5000 -p 443:5000 --name helloworldflask brunoguidone/helloworldflask:latest'''
+               sh '''docker run --rm -p 5000:5000 -p 443:5000 -d --name helloworldflask brunoguidone/helloworldflask:latest'''
            }
         }
     }
