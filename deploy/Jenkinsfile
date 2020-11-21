@@ -44,11 +44,10 @@ pipeline {
             }
         }
 
-        //stage('Pulling and Deploying') {
-        //    steps {
-        //        sh '''docker pull
-        //              docker run '''
-        //    }
-        //}
+        stage('Pulling and Deploying') {
+           steps {
+               sh '''docker run --rm -ti -p 5000:5000 -p 443:5000 --name helloworldflask brunoguidone/helloworldflask:latest'''
+           }
+        }
     }
 }
