@@ -22,7 +22,7 @@ pipeline {
         stage('Build & Tag Image') {
             steps {
                 script{
-                    DOCKERIMAGE = docker.build (registry + ":$BUILD_NUMBER", "-f Dockerfile ./deploy")
+                    DOCKERIMAGE = docker.build (registry + ":$BUILD_NUMBER", "-f ./deploy/Dockerfile")
                 }
             }
         }
