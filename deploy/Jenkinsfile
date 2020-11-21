@@ -40,7 +40,7 @@ pipeline {
 
         stage('Cleaning images') {
             steps {
-                sh '''docker rmi $(docker images -q)'''
+                sh '''docker rmi $(docker images -q) -f'''
             }
         }
 
