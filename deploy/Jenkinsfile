@@ -26,6 +26,12 @@ pipeline {
                 }
             }
         }
+        
+        stage('debug') {
+            steps {
+                sh '''echo $DOCKERIMAGE'''
+            }
+        }
 
         stage('Upload to Registry') {
             steps {
