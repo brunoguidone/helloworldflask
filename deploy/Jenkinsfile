@@ -27,18 +27,10 @@ pipeline {
             }
         }
         
-        stage('debug') {
-            steps {
-                sh '''echo $DOCKERIMAGE'''
-            }
-        }
-
         stage('Upload to Registry') {
             steps {
-                script{
-                    docker.withRegistry( '', REGISTRYID ) {
-                        DOCKERIMAGE.push()
-                    }
+                withDockerRegistry([ credentialsId: "Dockerhub", url: "$REGISTRY"]){
+                    sh 'docker push $DOCKERIMAGE'
                 }
             }
         }
