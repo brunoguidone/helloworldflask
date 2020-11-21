@@ -29,7 +29,7 @@ pipeline {
         
         stage('Upload to Registry') {
             steps {
-                withDockerRegistry([ credentialsId: "Dockerhub", url: "$REGISTRY"]){
+                withDockerRegistry([ credentialsId: "Dockerhub", url: "https://hub.docker.com/repository/docker/brunoguidone/helloworldflask/"]){
                     sh 'docker push $DOCKERIMAGE'
                 }
             }
