@@ -40,7 +40,7 @@ pipeline {
 
         stage('Cleaning images') {
             steps {
-                sh '''docker rmi $registry:$BUILD_NUMBER'''
+                sh '''docker rmi $(docker images -q)'''
             }
         }
 
