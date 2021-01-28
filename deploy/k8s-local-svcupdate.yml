@@ -1,0 +1,17 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+   namespace: coetech
+   name: helloworld-svc
+   labels:
+    app: helloworld
+    version: blue       
+spec:
+   selector:
+    app: helloworld
+    version: blue
+   ports:
+   - port: 80
+     targetPort: 5000
+   type: ClusterIP
