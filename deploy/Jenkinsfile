@@ -20,26 +20,53 @@ pipeline {
             }
         }
         
-        stage('Upload to Registry') {
-            steps {
-                script {
-                    docker.withRegistry( '', REGISTRYID ) {
-                        DOCKERIMAGE.push("$BUILD_NUMBER")
-                        DOCKERIMAGE.push('latest')
-                  }
-               }
-            }
-        }
-
-        stage('Cleaning images') {
-            steps {
-                sh '''docker rmi $(docker images -q) -f'''
-            }
-        }
-
-        stage('Pulling and Deploying') {
+        stage('Add image to kind') {
            steps {
-               sh '''docker run --rm -p 5000:5000 -p 443:5000 -d --name helloworldflask brunoguidone/helloworldflask:latest'''
+               sh '''kind load docker-image $DOCKERIMAGE'''
+           }
+        }
+
+        stage('Deploy to Blue') {
+           steps {
+               sh '''export VERSION=blue
+                     export SVC=helloworld-blue
+                     export ING=helloworld-blue-ingress
+                     export HOST=helloworld-blue.local
+                     export IMAGE=$DOCKERIMAGE
+                     cat deploy/k8s-local.yml | envsubst | kubectl apply -f -
+                  '''
+           }
+        }
+
+        stage('Point to Blue') {
+           steps {
+               sh '''export VERSION=blue
+                     cat deploy/k8s-local-svcupdate.yml | envsubst | kubectl apply -f -
+                  '''
+           }
+        }
+
+        stage('Deploy to Green') {
+           steps {
+               sh '''export VERSION=green
+                     export SVC=helloworld
+                     export ING=helloworld-ingress
+                     export HOST=helloworld.local
+                     export IMAGE=$DOCKERIMAGE
+                     cat deploy/k8s-local.yml | envsubst | kubectl apply -f -
+                  '''
+           }
+        }
+
+        stage('Cleanup Blue') {
+           steps {
+               sh '''export VERSION=blue
+                     export SVC=helloworld-blue
+                     export ING=helloworld-blue-ingress
+                     export HOST=helloworld-blue.local
+                     export IMAGE=$DOCKERIMAGE
+                     cat deploy/k8s-local.yml | envsubst | kubectl delete -f -
+                  '''
            }
         }
     }
