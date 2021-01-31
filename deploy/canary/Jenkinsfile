@@ -26,47 +26,33 @@ pipeline {
            }
         }
 
-        stage('Deploy to Blue') {
+        stage('Deploy Canary 10%') {
            steps {
-               sh '''export VERSION=blue
-                     export SVC=helloworld-blue
-                     export ING=helloworld-blue-ingress
-                     export HOST=helloworld-blue.local
-                     export IMAGE=$DOCKERIMAGE
-                     cat deploy/k8s-local.yml | envsubst | kubectl apply -f -
-                  '''
+               sh '''kubectl apply -f k8s-local-canary.yml'''
            }
         }
 
-        stage('Point to Blue') {
+        stage('Annotate to 40%') {
            steps {
-               sh '''export VERSION=blue
-                     cat deploy/k8s-local-svcupdate.yml | envsubst | kubectl apply -f -
-                  '''
+               sh '''kubectl annotate ingress helloworld-ingress nginx.ingress.kubernetes.io/canary-weight='40' -n coetech-canary --overwrite'''
            }
         }
 
-        stage('Deploy to Green') {
+        stage('Annotate to 100%') {
            steps {
-               sh '''export VERSION=green
-                     export SVC=helloworld
-                     export ING=helloworld-ingress
-                     export HOST=helloworld.local
-                     export IMAGE=$DOCKERIMAGE
-                     cat deploy/k8s-local.yml | envsubst | kubectl apply -f -
-                  '''
+               sh '''kubectl annotate ingress helloworld-ingress nginx.ingress.kubernetes.io/canary-weight='100' -n coetech-canary --overwrite'''
            }
         }
 
-        stage('Cleanup Blue') {
+        stage('Deploy to Production') {
            steps {
-               sh '''export VERSION=blue
-                     export SVC=helloworld-blue
-                     export ING=helloworld-blue-ingress
-                     export HOST=helloworld-blue.local
-                     export IMAGE=$DOCKERIMAGE
-                     cat deploy/k8s-local.yml | envsubst | kubectl delete -f -
-                  '''
+               sh '''cat k8s-local-stable.yml | envsubst | kubectl apply -f -'''
+           }
+        }
+
+        stage('Cleanup Canary') {
+           steps {
+               sh '''kubectl delete -f k8s-local-canary.yml'''
            }
         }
     }
