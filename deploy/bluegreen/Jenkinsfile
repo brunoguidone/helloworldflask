@@ -1,0 +1,73 @@
+pipeline {
+    agent any
+
+    environment {
+        REGISTRY = "brunoguidone/helloworldflask"
+        REGISTRYID = "Dockerhub"
+        DOCKERIMAGE = ""
+    }
+
+    options {
+        timeout(time: 1, unit: 'HOURS')
+    }
+
+    stages{
+        stage('Build & Tag Image') {
+            steps {
+                script{
+                    DOCKERIMAGE = docker.build (registry + ":$BUILD_NUMBER", "-f ./deploy/Dockerfile .")
+                }
+            }
+        }
+        
+        stage('Add image to kind') {
+           steps {
+               sh '''kind load docker-image $DOCKERIMAGE'''
+           }
+        }
+
+        stage('Deploy to Blue') {
+           steps {
+               sh '''export VERSION=blue
+                     export SVC=helloworld-blue
+                     export ING=helloworld-blue-ingress
+                     export HOST=helloworld-blue.local
+                     export IMAGE=$DOCKERIMAGE
+                     cat deploy/k8s-local.yml | envsubst | kubectl apply -f -
+                  '''
+           }
+        }
+
+        stage('Point to Blue') {
+           steps {
+               sh '''export VERSION=blue
+                     cat deploy/k8s-local-svcupdate.yml | envsubst | kubectl apply -f -
+                  '''
+           }
+        }
+
+        stage('Deploy to Green') {
+           steps {
+               sh '''export VERSION=green
+                     export SVC=helloworld
+                     export ING=helloworld-ingress
+                     export HOST=helloworld.local
+                     export IMAGE=$DOCKERIMAGE
+                     cat deploy/k8s-local.yml | envsubst | kubectl apply -f -
+                  '''
+           }
+        }
+
+        stage('Cleanup Blue') {
+           steps {
+               sh '''export VERSION=blue
+                     export SVC=helloworld-blue
+                     export ING=helloworld-blue-ingress
+                     export HOST=helloworld-blue.local
+                     export IMAGE=$DOCKERIMAGE
+                     cat deploy/k8s-local.yml | envsubst | kubectl delete -f -
+                  '''
+           }
+        }
+    }
+}

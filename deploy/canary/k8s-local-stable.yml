@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: helloworld
+  namespace: coetech
+  labels:
+    app: helloworld
+    version: 1.0.0
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  replicas: 1
+  selector:
+    matchLabels:
+      app: helloworld
+      version: 1.0.0
+  template:
+    metadata:
+      namespace: coetech
+      labels:
+        app: helloworld
+        version: 1.0.0
+    spec:
+      containers:
+      - name: helloworld
+        image: helloworld:1.0
+        ports:
+            - containerPort: 5000
+        resources:
+          requests:
+            memory: "1200Mi"
+            cpu: "150m"
+          limits:
+            memory: "1316Mi"
+            cpu: "600m"
+---
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  namespace: coetech
+  name: helloworld-hpa
+  labels:
+    app: helloworld
+    version: 1.0.0      
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: helloworld
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 90
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 90
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+   namespace: coetech
+   name: helloworld-svc
+   labels:
+    app: helloworld
+    version: 1.0.0
+spec:
+   selector:
+    app: helloworld
+    version: 1.0.0
+   ports:
+   - port: 80
+     targetPort: 5000
+   type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: helloworld-ingress
+  namespace: coetech
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/load-balance: ewma
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-body-size: "1m"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "8k"
+spec:
+  rules:
+  - host: helloworld.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: helloworld-svc
+          servicePort: 80
